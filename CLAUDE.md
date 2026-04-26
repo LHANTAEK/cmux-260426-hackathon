@@ -13,6 +13,12 @@
 
 본 디렉토리는 **5개 후보를 같은 톤·포맷으로 병렬 propose** 한 뒤, 시각적 비교로 1개를 선택하여 클로드 코드를 활용한 4시간 빌드에 들어가기 위한 의사결정 워크스페이스다.
 
+### 해커톤 3개 카테고리 (나중에 제출은 1개만 선택)
+
+1. **AI Safety & Security** — Find, expose, and defend against AI vulnerabilities. Red teaming CLIs, guardrail pipelines, jailbreak detection, prompt injection scanners, LLM fuzzing.
+2. **Developer Tooling** — Build tools that make AI-assisted development faster, safer, or more observable.
+3. **Business & Applications** — Ship user-facing AI products that solve real business problems.
+
 ## Decision Principle (사용자 명시)
 
 > "복잡하지 않고, 핵심 문제를 발견해서 심플하게 해결한다."
