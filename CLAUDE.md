@@ -32,7 +32,7 @@ cmux-260426-hackathon/
         └── proposal.md
 ```
 
-## Proposal Tone & Template (메일 v2 기준)
+## Proposal Tone & Template
 
 각 후보의 `proposal.md` 는 동료 pangpang@brain-crew.com 에게 보낸 메일 v2 의 톤앤매너를 그대로 따른다. **모든 후보에 동일한 7섹션** 을 둔다.
 
