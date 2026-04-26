@@ -2,17 +2,18 @@
 
 ## Same agent. Different customer. Different launch gate.
 
-**Agent Sail은 AI 에이전트가 고객에게 나가기 직전에 붙는 customer-aware release verification harness다.**
+**Agent Sail은 AI 에이전트를 고객별 출시 기준에 맞게 개선하고 검증하는 customer-evidence ETL harness다.**
 
-Codex와 Claude가 코드를 빠르게 만들수록 마지막 질문은 더 중요해진다:
-**"이 에이전트가 이 고객의 출시 기준을 증거로 만족하는가?"**
+Codex와 Claude가 코드를 빠르게 만들수록 마지막 한 사이클이 중요해진다:
+흩어진 고객 증거를 모으고, 그 증거로 에이전트를 고치고, 검증 결과를 report와 verdict로 남기는 일.
 
-Agent Sail은 Slack / 메일 / Notion / GitHub / PR / staging / test에 흩어진 고객 맥락을 자동 수집해
-`customer_contract.json`으로 컴파일하고, 같은 에이전트라도 고객별 기준에 따라
-`SHIP`, `HOLD`, `BLOCK`을 evidence와 함께 판정한다.
+| 단계 | Agent Sail이 하는 일 |
+|---|---|
+| **Extract** | Slack / 메일 / Notion / GitHub / PR / staging / test / assistant log에서 고객 기준과 실패 증거를 수집해 하나의 evidence board로 모은다. |
+| **Transform** | 수집한 증거를 `customer_contract.json`으로 컴파일하고, 에이전트 실행 결과와 비교해 누락 기준, tone drift, SLO blocker, 필요한 개선점을 만든다. |
+| **Load** | 개선 후 다시 확인한 evidence, load/SLO 결과, 변경 요약을 `report.json` / `report.html` / cmux alert / exit code로 내보내고 `SHIP`, `HOLD`, `BLOCK`을 판정한다. |
 
-심사위원이 봐야 할 가치는 단순 QA가 아니다. Agent Sail은 **증거 없는 AI 출고를 막는 하네스**다:
-CLI는 exit code를 내고, HTML report는 왜 막혔는지 보여주고, cmux는 그 verdict를 발표장에서 증폭한다.
+심사위원이 봐야 할 가치는 단순 QA가 아니다. Agent Sail은 **증거 없는 AI 출고를 막고, 개선 근거까지 남기는 release harness**다.
 
 설계 원본은 [`docs/02-agent-sail/proposal.ko.md`](docs/02-agent-sail/proposal.ko.md).
 
