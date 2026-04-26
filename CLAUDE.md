@@ -11,7 +11,7 @@
 - 심사: AIM Intelligence 엔지니어 (Samsung Ventures $7M Series A, Stinger·Starfort 운영사)
 - 인원: Solo or 팀 (최대 4명)
 
-본 디렉토리는 해커톤 출품 의사결정 + 빌드 워크스페이스다.
+본 디렉토리는 **5개 후보를 같은 톤·포맷으로 병렬 propose** 한 뒤, 시각적 비교로 1개를 선택하여 클로드 코드를 활용한 4시간 빌드에 들어가기 위한 의사결정 워크스페이스다.
 
 ## Decision Principle (사용자 명시)
 
@@ -28,7 +28,7 @@ cmux-260426-hackathon/
 ├── CLAUDE.md                              # 본 파일
 ├── dev-list.md                            # 후보 인덱스 (사용자 작성)
 └── docs/
-    └── 01-mcp-rugcheck-on-cmux/           # S6 (기존 메일 v2 후보)
+    └── 01-mcp-rugcheck-on-cmux/           
         └── proposal.md
 ```
 
