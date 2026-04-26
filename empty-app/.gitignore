@@ -1,0 +1,4 @@
+.env
+.agentsail/
+__pycache__/
+*.pyc

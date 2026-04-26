@@ -1,0 +1,10 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+langchain==0.3.7
+langchain-core==0.3.21
+langchain-openai==0.2.8
+langgraph==0.2.50
+langsmith==0.1.142
+prometheus-client==0.21.0
+pydantic==2.9.2
+typing-extensions==4.12.2

@@ -1,0 +1,137 @@
+# Agent Sail load-test config.
+# Metric names and SLOs are based on:
+# /Users/pangpang/devops/llm-apps-monitoring-0424/main/docs/02-metrics.md
+version: 1
+name: agentsail-llm-slo
+
+target:
+  base_url: http://localhost:8000
+  chat_path: /chat
+  metrics_url: http://localhost:8000/metrics
+  prometheus_url: http://localhost:8428
+
+resources:
+  # Docker Compose-style values. Users should not write raw byte values.
+  memory:
+    limit: 1g
+    alert_at: 80%
+
+locust:
+  locustfile: locust/agentsail/locustfile.py
+  results_dir: .agentsail/loadtests/default
+  users: 32
+  spawn_rate: 1
+  run_time: 12m
+
+runtime:
+  auto_install: true
+  installer: uv
+  python: python3
+  venv: .agentsail/loadtests/.venv
+  packages:
+    - locust>=2.42.0
+    - httpx>=0.28.0
+
+slos:
+  ttft_p95_seconds:
+    metric: ttft_seconds
+    unit: seconds
+    threshold: 1.5
+    meaning: Time to first token at the API edge.
+  inter_token_latency_p95_seconds:
+    metric: inter_token_latency_seconds
+    unit: seconds
+    threshold: 0.08
+    meaning: Inter-token gap during SSE streaming.
+  total_response_p95_seconds:
+    metric: total_response_seconds
+    unit: seconds
+    threshold: 10
+    meaning: Request to last token wall-clock time.
+  error_rate:
+    metric: llm_errors_total / llm_requests_total
+    unit: ratio
+    threshold: 0.01
+    meaning: Error rate across 429, timeout, 5xx, and upstream failures.
+  memory_working_set:
+    metric: container_memory_working_set_bytes
+    display_unit: gb
+    threshold: 80%
+    of: resources.memory.limit
+    meaning: Memory working set. Configure the memory limit above as 512m, 1g, 2g, etc.
+
+leading_signals:
+  request_queue_depth:
+    metric: request_queue_depth
+    unit: requests
+    candidate_threshold: 4
+    meaning: Requests waiting on the LLM concurrency semaphore.
+  concurrent_llm_calls:
+    metric: concurrent_llm_calls
+    unit: calls
+    candidate_threshold_ratio: 0.75
+    meaning: In-flight LLM calls holding a semaphore slot.
+  concurrent_sessions:
+    metric: concurrent_sessions
+    unit: sessions
+    meaning: Active SSE sessions at the HTTP layer.
+
+metric_catalog:
+  ttft_seconds:
+    type: histogram
+    labels: [route, mode]
+    unit: seconds
+    slo: p95 < 1.5s
+  inter_token_latency_seconds:
+    type: histogram
+    labels: [route]
+    unit: seconds
+    slo: p95 < 0.08s
+  total_response_seconds:
+    type: histogram
+    labels: [route, status]
+    unit: seconds
+    slo: p95 < 10s
+  llm_requests_total:
+    type: counter
+    labels: [route, status]
+    unit: requests
+    meaning: Denominator for RPS and error rate.
+  llm_errors_total:
+    type: counter
+    labels: [route, kind]
+    unit: errors
+    meaning: Error counter for 429, timeout, 5xx, and upstream failures.
+  request_queue_depth:
+    type: gauge
+    labels: []
+    unit: requests
+    meaning: Queue pressure leading signal.
+  concurrent_llm_calls:
+    type: gauge
+    labels: []
+    unit: calls
+    meaning: LLM semaphore saturation leading signal.
+  concurrent_sessions:
+    type: gauge
+    labels: []
+    unit: sessions
+    meaning: Active SSE sessions.
+  container_memory_working_set_bytes:
+    type: gauge
+    labels: [name]
+    raw_unit: bytes
+    display_unit: gb
+    slo: < 80% of resources.memory.limit
+    examples: [512m, 1g, 2g]
+    meaning: Container working set. Users configure Docker Compose-style memory values; Agent Sail converts internally.
+
+promql:
+  ttft_p95: histogram_quantile(0.95, sum(rate(ttft_seconds_bucket[1m])) by (le, mode))
+  itl_p95: histogram_quantile(0.95, sum(rate(inter_token_latency_seconds_bucket[1m])) by (le))
+  total_p95: histogram_quantile(0.95, sum(rate(total_response_seconds_bucket[1m])) by (le, status))
+  error_rate: sum(rate(llm_errors_total[1m])) / sum(rate(llm_requests_total[1m]))
+  queue_depth: request_queue_depth
+  concurrent_llm_calls: concurrent_llm_calls
+  concurrent_sessions: concurrent_sessions
+  memory_working_set: container_memory_working_set_bytes{name=~"deployment-(api|app)-.*"}
