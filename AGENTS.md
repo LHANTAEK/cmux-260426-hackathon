@@ -4,14 +4,14 @@
 
 ## Project Overview
 
-**CMUX × AIM Intelligence 해커톤 (2026-04-26 일요일, 8am–6pm, Monacospace)** AI Safety & Security 트랙 출품 준비.
+**CMUX × AIM Intelligence 해커톤 (2026-04-26 일요일, 8am–6pm, Monacospace)** 단일 최종 제출안 선정을 위한 브레인스토밍 및 제안서 워크스페이스.
 
 - 형식: 터미널 only, IDE 금지, AI coding agent로 빌드
 - 인프라: Gemini + GCP 크레딧 $40,000 제공
 - 심사: AIM Intelligence 엔지니어 (Samsung Ventures $7M Series A, Stinger·Starfort 운영사)
 - 인원: Solo or 팀 (최대 4명)
 
-본 디렉토리는 **5개 후보를 같은 톤·포맷으로 병렬 propose** 한 뒤, 시각적 비교로 1개를 선택하여 클로드 코드를 활용한 4시간 빌드에 들어가기 위한 의사결정 워크스페이스다.
+본 디렉토리는 **카테고리별 후보를 같은 톤·포맷으로 병렬 propose** 한 뒤, 시각적 비교로 최종 1개를 선택하기 위한 의사결정 워크스페이스다.
 
 ### 해커톤 3개 카테고리 (나중에 제출은 1개만 선택)
 
@@ -27,12 +27,58 @@
 - 단순한 프레임: **문제 발견 → 해결**
 - 멋있는 기술 스택보다 "한 컷 시연 + 한 줄 헤드라인 + 심사관 직결"의 3축으로 채점한다.
 
+## Current Working Direction (2026-04-26)
+
+현재 가장 강한 `Developer Tooling` 축은 **`release-harness-on-cmux`** 다.
+
+- 문제 정의: 작은 AI 팀은 QA/QC 인력이 없고, 고객별 성공 기준이 Slack·Notion·GitHub 에 흩어져 있어 `잘 돌아가는 데모`를 `맞는 출고물`로 착각한 채 출고한다.
+- 제품 포지셔닝: **AI coding assistant 기능이 아니라, 어떤 assistant / agent / workflow 바깥에도 붙일 수 있는 customer-aware release harness** 로 본다.
+- 핵심 입력: `Slack thread`, `Notion page/export`, `GitHub PR diff`, 필요하면 `MCP config`, `prompt log`, `staging URL`
+- 핵심 출력: `Go / No-Go 판정`, 실패 근거 3개, screenshot/diff/evidence, 자동 생성된 `report.json`, `report.html`
+- 기본 실행 표면: `CLI first`
+- 기본 시연 표면: `cmux alert + HTML report`
+- 보조 시각화: 얇은 `TUI`
+- 금지할 과욕: 해커톤 MVP에서 full GUI platform 을 만들려고 하지 않는다. **본체는 `CLI + HTML report + open`** 이고, TUI/GUI 는 후순위다.
+
+### Harness Reference
+
+아키텍처 감각은 `/Users/limhantaek/oh-my-braincrew/oh-my-braincrew` 를 참조한다.  
+다만 **그 저장소 전체를 베끼는 것이 목적이 아니다.**
+
+빌릴 패턴:
+- Go 또는 단일 CLI entrypoint 중심의 하네스 구조
+- adapter / runner / report renderer 분리
+- hook 또는 wrapper 로 외부 workflow 에 붙는 방식
+- state/evidence 를 파일로 남기고, opt-in 시각화 레이어를 따로 두는 방식
+
+이번 해커톤에서 필요한 범위:
+- `spec compiler`: 고객 성공 기준을 `customer_contract.json` 또는 `spec.yaml` 로 컴파일
+- `runner layer`: scenario check, hard-rule check, Playwright smoke, 좁은 범위의 LLM judge
+- `evidence store`: 실패 이유, 인용 문장, screenshot, diff
+- `report renderer`: `report.html`
+- `launcher`: `client-release approve ... --open-report`
+
+### Killer Demo Constraint
+
+가장 중요한 데모는 하나다.
+
+- 고객사 `acme-bank`
+- 요구사항: `CSV export 필수`, `white-label only`, `enterprise tone`
+- 현재 데모의 실패: `beta_banner=true`, export route 없음, 보고서 tone drift
+- 발표 장면: CLI 실행 -> cmux 연쇄 점멸 -> `report.html` 자동 오픈 -> `BLOCKED`
+
+새 세션에서는 `release-harness-on-cmux` 를 논의할 때 반드시 위 문제정의와 MVP 범위를 유지한다.
+
 ## Folder Layout
 
 ```
 cmux-260426-hackathon/
 ├── CLAUDE.md                              # 본 파일
 ├── dev-list.md                            # 후보 인덱스 (사용자 작성)
+├── README2.md                             # specfirewall 초안
+├── README3.md                             # shiplock 초안
+├── README4.md                             # release-harness-on-cmux 초안 (현재 Developer Tooling 1순위)
+├── README5.md                             # demo-preflight-harness 초안
 └── docs/
     └── 01-mcp-rugcheck-on-cmux/           
         └── proposal.md
@@ -99,3 +145,5 @@ cmux 어떤 워크스페이스에서 어떻게 보일지 명시.
 - 후보 간 헤드라인 중복 금지 (메일 v2 의 "한 줄 헤드라인" 룰)
 - 9시간 빌드 분해는 반드시 8am 시작, 6pm 시연으로 끊는다
 - 새 후보 추가 시 `dev-list.md` 와 본 CLAUDE.md 의 Folder Layout 동시 갱신
+- 현재 1순위 후보를 다룰 때는 `generic harness` 가 아니라 `release harness` 로 좁혀 설명한다
+- `cmux` 는 본체가 아니라 시연 채널, `HTML report` 는 증빙 산출물이라는 구분을 유지한다
