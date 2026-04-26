@@ -1,215 +1,400 @@
-# 03. ShipCheck — "Agent CI before you launch"
+# 03. Agent Sail — Customer-specific Agent CI
 
-## 1. 풀려는 문제 정의
+## 1. Problem
 
-**"에이전트는 데모에서 성공해도 배포에서 실패한다. 코드에는 CI가 있는데, 에이전트에는 CI가 없다."**
+**AI agents can build fast, but teams still do not know whether the result is successful for a specific customer.**
 
-근거:
-- 기업 88%가 에이전트 보안 사고를 경험했으나, 14.4%만 정식 보안 승인 후 배포
-- EU AI Act 고위험 의무 2026-08-02 시행 → 배포 전 검증 증빙 수요 급증
-- 기존 도구는 한 축만 커버:
-  - Flakestorm: 프롬프트 레벨 chaos만
-  - Patronus AI: 출력 품질 평가만
-  - Arize/Langfuse/AgentOps: 배포 *후* 관찰만
-  - GuideLLM: LLM 서버 벤치마크만
-  - Cisco AI Scanner: MCP 정적 스캔만
-- **load + policy + chaos 세 축을 합쳐서 SAFE/HOLD/BLOCK 판정을 내리는 도구는 없다**
+In small AI teams, customer success criteria are scattered across meeting notes, PRDs, Slack threads, demo feedback, and tickets. A coding agent can produce a working demo, but the team often ships without checking it against the criteria that actually matter for that customer.
 
-## 2. 포지셔닝
+Examples:
 
-**카테고리**: Agent CI
-**제품명**: ShipCheck
+- FinBank requires citations in every answer, no PII exposure, and 50 concurrent internal users during onboarding.
+- RetailCo cares more about Korean refund-policy answers and only expects 20 concurrent users.
+- MedOps requires escalation for medical/legal questions and approval before external messages.
 
-> "Software has CI before deployment. Agents need CI before launch."
-> "코드는 배포 전에 CI를 돌립니다. 에이전트도 사람들에게 열기 전에 CI가 필요합니다."
+The same agent can be shippable for one customer and a launch blocker for another.
 
-기존 제품과의 차별화:
+## 2. Product Definition
 
-| 도구 | 역할 | 비유 |
-|---|---|---|
-| LiteLLM | 모델 호출 게이트웨이 | runtime gateway |
-| Langfuse / LangSmith | 관측·평가 플랫폼 | observability |
-| **ShipCheck** | **배포 전 CI 게이트** | **pre-ship test gate** |
+**Agent Sail turns customer-specific success criteria into executable release gates for AI agents.**
 
-핵심 차별점:
-> "LiteLLM routes model requests. We orchestrate specialist agents to decide whether an entire agent workflow is safe to launch."
+Short version:
 
-## 3. 아키텍처
+> Agent Sail checks whether an agent is ready to ship for this customer.
 
-### 3.1 LangGraph Supervisor Graph
+Positioning:
 
-메인 orchestrator가 전문 에이전트들에게 검사를 분배하고, 결과를 모아 판정을 내린다.
+| Tool category | What it answers |
+|---|---|
+| Traditional CI | Does the code pass tests? |
+| Observability | What happened after deployment? |
+| LLM gateway | How should model requests be routed? |
+| **Agent Sail** | **Does this agent satisfy this customer's launch criteria?** |
+
+Key message:
+
+> Code has CI before deployment. AI agents need customer-specific CI before launch.
+
+## 3. Core Workflow
 
 ```
-                    ┌─────────────────┐
-                    │  Supervisor     │
-                    │  (LangGraph)    │
-                    └──────┬──────────┘
-                           │
-              ┌────────────┼────────────┐
-              ▼            ▼            ▼
-     ┌────────────┐ ┌───────────┐ ┌──────────┐
-     │ PolicyCheck│ │ ChaosCheck│ │ LoadCheck │
-     │ Agent      │ │ Agent     │ │ Agent     │
-     └────────────┘ └───────────┘ └──────────┘
-              │            │            │
-              └────────────┼────────────┘
-                           ▼
-                    ┌─────────────────┐
-                    │  VerdictAgent   │
-                    │  (aggregate)    │
-                    └──────┬──────────┘
-                           │
-                           ▼
-                    ┌─────────────────┐
-                    │  HITL Interrupt  │
-                    │  (approve/reject)│
-                    └─────────────────┘
+Customer context
+  -> Customer success criteria
+  -> Release gates
+  -> Agent harness checks
+  -> SHIP / HOLD / BLOCK verdict
 ```
 
-### 3.2 A2A-style 서브 에이전트
+Agent Sail is not a general QA dashboard and not an LLM gateway. It is the release gate between agent-built output and customer-specific acceptance.
 
-각 에이전트는 A2A 인터페이스로 통신하며, 독립적으로 교체·확장 가능:
+## 4. Interface Decision
 
-- **PolicyCheckAgent**: timeout 유무, max tool calls, budget cap, fallback 설정 감사
-- **ChaosCheckAgent**: 429 주입, timeout 주입, malformed tool output 주입 → 생존 여부 판정
-- **LoadCheckAgent**: 동시 요청 증가 → safe/degraded/fail 지점 계산
+### 4.1 Primary interface: CLI/TUI
 
-### 3.3 Human-in-the-loop
+The core product should run in the terminal.
 
-LangGraph `interrupt()` 기반:
-- **SHIP**: 바로 진행
-- **SHIP WITH LIMITS**: 제한 조건 표시 + 승인 요청
-- **HOLD**: 수정 필요 항목 제시 + 거절 (수정 후 재실행)
-- **BLOCK**: 심각한 결함 → 기본 거절
+Reasons:
 
-## 4. MVP 테스트 항목 (4개)
+- The hackathon is centered on terminal workflows and coding agents.
+- A release gate needs stdout, exit codes, and artifacts.
+- Agent harness integration is simpler from a CLI.
+- Live load/SLO probes can be shown directly in a TUI.
+- It fits CI/CD and pre-merge workflows.
 
-### 4.1 Policy Test
-- timeout 설정 있는지
-- max tool calls 제한 있는지
-- budget cap 있는지
-- fallback 경로 있는지
-
-### 4.2 Chaos Test
-- 429 (rate limit) 주입 시 graceful degradation 여부
-- timeout 주입 시 적절한 에러 핸들링 여부
-- malformed tool output 주입 시 크래시 여부
-
-### 4.3 Load Test
-- 동시 요청 증가시키며 safe concurrency 측정
-- degraded 구간 시작점 측정
-- fail 지점 측정
-
-### 4.4 Verdict Card
-- SHIP / SHIP WITH LIMITS / HOLD / BLOCK 판정
-- 근거 3줄 요약
-- 수정 필요 항목 리스트
-
-## 5. CLI 인터페이스
-
-### 명령어
+Primary command:
 
 ```bash
-shipcheck init              # agent.yaml 템플릿 생성
-shipcheck run ./agent.yaml  # 전체 CI 실행
-shipcheck report            # 마지막 결과 리포트
-shipcheck ci ./agent.yaml   # GitHub Actions 스타일 CI 모드
+agentsail ci --customer finbank --target http://localhost:8000/chat
 ```
 
-### 출력 예시
+Expected behavior:
 
-```
-Agent CI: demo-agent
+- Load customer criteria.
+- Run agent harness checks.
+- Run SLO/load probe.
+- Run fallback/chaos-lite checks.
+- Print live TUI status.
+- Write structured result artifact.
+- Exit non-zero on `HOLD` or `BLOCK`.
 
-[PASS] policy: tool timeouts configured
-[PASS] safety: no unbounded tool loop detected
-[WARN] load: degraded after 38 concurrent users
-[FAIL] chaos: provider 429 has no fallback
+### 4.2 Secondary interface: static web report
 
-VERDICT: HOLD
+Web should not be the main product for the hackathon MVP. It should be a generated report.
 
-Required before launch:
-1. Add fallback for provider 429
-2. Set max concurrency to 25
-3. Add 3s timeout to search_tool
-```
-
-## 6. 구현 모듈
-
-```
-shipcheck/
-├── cli.py                   # CLI 엔트리포인트 (typer/click)
-├── supervisor_graph.py      # LangGraph state + nodes
-├── a2a_clients.py           # A2A-style agent 호출 wrapper
-├── agents/
-│   ├── policy_checker.py    # 정책 감사 에이전트
-│   ├── chaos_checker.py     # 장애 주입 에이전트
-│   └── load_checker.py      # 부하 테스트 에이전트
-├── verdict.py               # 판정 로직 + 집계
-├── risk_rules.py            # unsafe 조건 룰 정의
-├── report_renderer.py       # CLI verdict 출력 (rich)
-├── approval.py              # HITL interrupt/resume handling
-└── schemas/
-    └── agent_spec.py        # agent.yaml 스키마 정의
+```bash
+agentsail ci --customer finbank --target http://localhost:8000/chat --report
 ```
 
-## 7. 데모 흐름 (3분)
+Generated artifact:
 
-| 순서 | 발표자 액션 | 화면 | 의미 |
-|---|---|---|---|
-| 1 | 한 줄 소개 | 슬라이드 | "에이전트는 데모에서 성공해도 배포에서 실패합니다" |
-| 2 | 문제 제기 | 슬라이드 | "코드는 CI가 있는데, 에이전트에는 CI가 없습니다" |
-| 3 | 명령 실행 | `shipcheck ci ./agent.yaml` | 라이브 데모 시작 |
-| 4 | 에이전트 실행 | LangGraph supervisor 시작, 3개 에이전트 병렬 호출 | multi-agent CI 동작 |
-| 5 | 결과 반환 | policy PASS, load WARN, chaos FAIL | 각 축 결과 |
-| 6 | 판정 | `VERDICT: HOLD` + 수정 항목 | 배포 불가 판정 |
-| 7 | 수정 후 재실행 | fallback 추가 → `shipcheck ci` 재실행 | 수정 반영 |
-| 8 | 재판정 | `VERDICT: SHIP WITH LIMITS` | 조건부 배포 가능 |
-| 9 | HITL | `Ship with limits? [approve/reject]` → approve | 사람이 최종 승인 |
+```text
+.agentsail/reports/finbank-run-001.html
+```
 
-## 8. 인프라 요구사항
+Purpose:
 
-**해커톤 데모**: MacBook 하나로 충분
-- LangGraph supervisor + 3 에이전트 = Python 프로세스 (256MB ~ 1GB RAM)
-- LLM은 클라우드 API 호출
-- 부하 테스트는 asyncio/httpx → 4 vCPU / 8GB RAM이면 넉넉
+- Share evidence with non-terminal viewers.
+- Show load curve, failed criteria, samples, and fix suggestions.
+- Support the demo without turning the product into a dashboard.
 
-**프로덕션**:
-- 단일 노드: 4 vCPU / 8-16GB RAM
-- 클라우드 비용: $50-150/월 + LLM API 비용 (변동)
+## 5. TUI MVP
 
-## 9. 12시간 빌드 분해
+The TUI should be a release board, not a full whiteboard.
 
-| 시간 | 마일스톤 |
+```
+┌ Customers ───────┐ ┌ Criteria / Evidence ─────────────────────┐ ┌ Verdict ───────┐
+│ FinBank          │ │ citations_required                        │ │ HOLD            │
+│ RetailCo         │ │ source: meeting.md:12                     │ │                 │
+│ MedOps           │ │                                           │ │ Failed:         │
+│                  │ │ expected_concurrency: 50                  │ │ 1. citations    │
+│ Target           │ │ p95_latency_ms: 5000                      │ │ 2. 31/50 users  │
+│ langgraph:app    │ │ fallback_on_429: short_answer             │ │ 3. no fallback  │
+└──────────────────┘ └───────────────────────────────────────────┘ └─────────────────┘
+
+┌ Live Load Probe ───────────────────────────────────────────────────────────────┐
+│ Phase: RAMPING     Users: 37 / 50     RPS: 12.4                               │
+│ p50: 1.2s          p95: 5.8s          error: 0.4%                              │
+│                                                                                │
+│ Load      ▁▂▃▄▅▆▇                                                              │
+│ p95       ▁▁▂▂▄▆█                                                              │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Minimum controls:
+
+- `r`: run checks
+- `c`: view contract
+- `e`: view evidence
+- `q`: quit
+
+For hackathon reliability, this can be implemented with `rich.Live` first. A fuller Textual UI can be a stretch goal.
+
+## 6. Customer Criteria Model
+
+The MVP should support explicit customer criteria first. Automatic extraction from messy context is useful, but it is not required for the core demo.
+
+Example:
+
+```yaml
+customer: finbank
+target:
+  type: http
+  endpoint: http://localhost:8000/chat
+  method: POST
+  prompt_field: message
+  answer_field: answer
+  citations_field: citations
+
+criteria:
+  quality:
+    citations_required: true
+
+  reliability:
+    expected_concurrency: 50
+    max_p95_latency_ms: 5000
+    max_error_rate: 0.01
+    fallback_on_429: short_answer
+
+  safety:
+    external_email_requires_approval: true
+```
+
+LangGraph target example for local app checks:
+
+```yaml
+customer: finbank
+target:
+  type: langgraph
+  module: examples.support_graph
+  app: app
+  input_key: message
+  answer_field: answer
+  citations_field: citations
+
+criteria:
+  reliability:
+    expected_concurrency: 50
+    max_p95_latency_ms: 5000
+    max_error_rate: 0.01
+    fallback_on_429: short_answer
+```
+
+Two demo customers:
+
+- `FinBank`: strict citations, 50 concurrent users, fallback required.
+- `RetailCo`: Korean refund answers, 20 concurrent users, fallback optional.
+
+The same agent should produce different verdicts depending on the customer.
+
+## 7. MVP Checks
+
+### 7.1 Criteria check
+
+Validate deterministic response requirements.
+
+Examples:
+
+- Response must include `citations`.
+- Response language must be Korean.
+- External email action must include `approval_required`.
+
+### 7.2 Load/SLO probe
+
+Run a short launch-readiness load probe, not a full production benchmark.
+
+MVP approach:
+
+- Use `asyncio` as the load driver.
+- Use `httpx` for HTTP targets.
+- Use the LangGraph adapter for local graph targets.
+- Ramp users in short steps.
+- Track p50, p95, error rate, completed requests.
+- Compare against customer SLO.
+
+Example result:
+
+```text
+[FAIL] load: reached only 31/50 users before p95 exceeded 5000ms
+```
+
+Language to use:
+
+> This is a launch-readiness probe, not a production capacity certification.
+
+### 7.3 Chaos-lite check
+
+Inject one or two predictable failures through the harness adapter.
+
+MVP failures:
+
+- Provider returns `429`.
+- Tool request times out.
+
+Example result:
+
+```text
+[FAIL] fallback_on_429: expected short_answer, got raw provider error
+```
+
+### 7.4 Verdict
+
+Output:
+
+- `SHIP`
+- `SHIP WITH LIMITS`
+- `HOLD`
+- `BLOCK`
+
+For the hackathon demo, focus on:
+
+- `FinBank -> HOLD`
+- `RetailCo -> SHIP`
+
+This proves the core idea: customer-specific release gates.
+
+## 8. Agent Harness Integration
+
+Agent Sail should integrate with an agent harness through a simple target adapter.
+
+MVP target types:
+
+- `http`: call a running agent endpoint.
+- `langgraph`: import a local LangGraph app/runnable and invoke it during criteria and load/SLO checks.
+- `mock`: deterministic demo target.
+
+Optional later:
+
+- `command`: run a local command.
+- `docker`: run an isolated local service.
+- `a2a`: use remote specialist evaluators.
+
+Minimal adapter contract:
+
+```text
+input: prompt, scenario metadata
+output: answer, citations, actions, latency, error
+```
+
+For `langgraph`, the adapter should load a module path and app symbol, then normalize graph output into the same evidence contract.
+
+Example target:
+
+```bash
+agentsail ci --customer finbank --target langgraph:./examples/support_graph.py:app
+```
+
+The harness should return structured evidence. Agent Sail should not rely on a model's subjective opinion for the final verdict.
+
+## 9. CLI Commands
+
+MVP:
+
+```bash
+agentsail ci --customer finbank --target http://localhost:8000/chat
+agentsail ci --customer finbank --target langgraph:./examples/support_graph.py:app
+agentsail ci --customer retailco --target http://localhost:8000/chat
+agentsail report .agentsail/runs/finbank-run-001.json
+```
+
+Stretch:
+
+```bash
+agentsail learn context/acme/
+agentsail tui
+```
+
+`learn` can turn customer notes into a draft criteria file, but it should not be required for the main demo. If used, it must show citations and allow human confirmation.
+
+## 10. Demo Flow
+
+Core demo in 3 minutes:
+
+1. Show the same `Support Agent v12`.
+2. Select `FinBank`.
+3. Run `agentsail ci` against the LangGraph app target.
+4. TUI shows live load/SLO probe.
+5. Verdict: `HOLD`.
+6. Failed criteria:
+   - citations missing
+   - only 31/50 users passed SLO
+   - no fallback on 429
+7. Select `RetailCo`.
+8. Run the same agent against RetailCo criteria.
+9. Verdict: `SHIP`.
+
+One-line explanation:
+
+> Same agent. Different customer. Different launch gate.
+
+## 11. Demo Script
+
+Opening:
+
+> AI agents can build demos fast. The problem is that every customer defines success differently. Agent Sail turns customer-specific success criteria into release gates, then checks whether the agent is ready to ship.
+
+During demo:
+
+> FinBank needs citations, fallback behavior, and 50 concurrent internal users. The agent works in a demo, but Agent Sail blocks the launch because it fails FinBank's criteria.
+
+Contrast:
+
+> RetailCo has a different launch bar. Same agent, different customer, different verdict.
+
+Closing:
+
+> Agent Sail is customer-specific CI for AI agents.
+
+## 12. Implementation Plan
+
+12-hour scope:
+
+| Time | Milestone |
 |---|---|
-| 0:00–0:30 | 환경 셋업 (uv, LangGraph, A2A SDK, rich) |
-| 0:30–2:00 | agent.yaml 스키마 + PolicyCheckAgent |
-| 2:00–3:30 | ChaosCheckAgent (429/timeout/malformed 주입) |
-| 3:30–5:00 | LoadCheckAgent (asyncio 동시 요청) |
-| 5:00–6:00 | LangGraph supervisor graph 연결 |
-| 6:00–7:00 | VerdictAgent + risk_rules.py |
-| 7:00–8:00 | HITL interrupt/resume + approval.py |
-| 8:00–9:00 | CLI (shipcheck init/run/ci/report) |
-| 9:00–10:00 | report_renderer.py (rich 출력 polish) |
-| 10:00–11:00 | 데모 시나리오 + 더미 에이전트 준비 |
-| 11:00–12:00 | E2E 리허설 ×3 + 발표 준비 |
+| 0:00-1:00 | project setup, sample FastAPI target, sample LangGraph app, mock target |
+| 1:00-2:00 | customer criteria YAML schema |
+| 2:00-4:00 | criteria checks: citations, language, external action approval |
+| 4:00-6:00 | load/SLO probe with `asyncio`, `httpx`, and LangGraph target adapter |
+| 6:00-7:00 | chaos-lite 429/fallback check |
+| 7:00-8:30 | verdict engine + run artifact JSON |
+| 8:30-10:00 | TUI/live output with `rich.Live` |
+| 10:00-11:00 | static HTML report |
+| 11:00-12:00 | deterministic demo rehearsal |
 
-**라이브러리**: `langgraph`, `a2a-sdk`, `typer`, `rich`, `httpx`, `pyyaml`
+Recommended libraries:
 
-## 10. 리스크 + 대응
+- `typer`
+- `rich`
+- `httpx`
+- `pyyaml`
+- `fastapi` for demo target
+- `langgraph` for the demo app target adapter
+- `jinja2` for static HTML report
 
-| 리스크 | 확률 | 대응 |
-|---|---|---|
-| A2A 풀스펙 구현 시간 부족 | 높음 | 로컬 subprocess/HTTP로 구현, 인터페이스만 A2A 스타일. "A2A-ready specialist agents" 포지셔닝 |
-| LLM API 지연으로 데모 느림 | 중 | 데모용 mock 응답 캐시 준비 |
-| Load test가 로컬에서 의미 없어 보임 | 중 | "safe concurrency" 숫자 + degradation curve 시각화로 설득력 확보 |
-| 판정이 임의적으로 보일 수 있음 | 낮음 | risk_rules.py에 명시적 룰 정의, 각 FAIL/WARN에 근거 표시 |
+Avoid for MVP:
 
-## 11. 확장 로드맵 (v2)
+- Full web app
+- Real Slack/Notion/GitHub integrations
+- Full A2A protocol
+- LangGraph-only product positioning
+- Production-grade load testing
+- Real CI provider integration
 
-- **Replay Test**: 실패 trace 재현 → 어느 step에서 터졌는지 표시
-- **GitHub Actions 연동**: CI/CD 파이프라인에 `shipcheck` 스텝 추가
-- **Verdict History**: 배포 판정 이력 대시보드
-- **Custom Rules**: 팀별 정책 룰 정의 (`.shipcheckrc`)
-- **A2A 원격 에이전트**: 외부 전문 에이전트와 실제 A2A 프로토콜 통신
+## 13. Risks and Defenses
+
+| Risk | Defense |
+|---|---|
+| "Isn't this just QA/CI?" | Traditional CI checks generic code behavior. Agent Sail checks customer-specific launch criteria for agent outputs. |
+| "Can Codex just do this?" | Codex can fix code. Agent Sail defines repeatable release gates, runs probes, emits artifacts, and blocks release by policy. |
+| "Is the load result production-accurate?" | It is a launch-readiness probe, not capacity certification. It catches SLO blockers before customer launch. |
+| "Is the verdict subjective?" | Final verdict is rule-based from criteria and measured evidence. LLM extraction is optional and human-confirmed. |
+| "Why not a web dashboard?" | The product is a CI gate. CLI/TUI is the source of truth; static HTML report is the shareable artifact. |
+
+## 14. Roadmap
+
+- Context extraction from meeting notes and customer docs.
+- Human-confirmed customer contracts with citations.
+- GitHub Actions integration.
+- Historical verdict comparison.
+- Replay failed customer scenarios.
+- A2A specialist evaluators.
+- Full web dashboard for account teams.
