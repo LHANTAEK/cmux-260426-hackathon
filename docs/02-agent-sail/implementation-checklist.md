@@ -6,8 +6,10 @@
 - [x] Manual stdlib subcommand routing: `init`, `collect`, `compile`, `check`, `verdict`, `ci`, `report`, `loadtest`, `doctor`, `version`
 - [x] Project init installer with embedded harness assets
 - [x] Claude Code plugin and slash commands under `.claude/`
-- [x] Codex command recipes under `.codex/commands/agentsail/`
-- [x] Codex skill under `.codex/skills/agentsail/SKILL.md`
+- [x] Codex plugin manifest under `.codex-plugin/plugin.json`
+- [x] Codex slash commands under `commands/`
+- [x] Codex skill under `skills/agentsail/SKILL.md`
+- [x] Codex marketplace plugin under `.agents/plugins/marketplace.json` and `plugins/agentsail/`
 - [x] Local fixture collection into `.agentsail/cache/<customer>/`
 - [x] Contract compilation into `.agentsail/contracts/<customer>-contract.json`
 - [x] Mock target adapter for deterministic demos

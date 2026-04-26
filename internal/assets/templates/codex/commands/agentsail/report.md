@@ -1,4 +1,4 @@
-# agentsail:report
+# /agentsail:report
 
 Render or open a standalone HTML evidence report from a run JSON.
 

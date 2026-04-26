@@ -1,4 +1,4 @@
-# agentsail:verdict
+# /agentsail:verdict
 
 Print the latest SHIP/HOLD/BLOCK verdict for a customer.
 

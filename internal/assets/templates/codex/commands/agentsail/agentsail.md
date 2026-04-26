@@ -1,4 +1,4 @@
-# agentsail
+# /agentsail
 
 Dispatcher recipe. Use the terminal CLI directly:
 

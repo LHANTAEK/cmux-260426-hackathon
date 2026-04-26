@@ -1,4 +1,4 @@
-# agentsail:check
+# /agentsail:check
 
 Run Agent Sail checks against a target.
 

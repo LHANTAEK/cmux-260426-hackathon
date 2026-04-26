@@ -15,8 +15,8 @@ The raw GitHub URL requires a public repository. Private repos return `404` for 
 Release binaries are published automatically by `.github/workflows/release.yml` when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Development install from this repo:
@@ -42,8 +42,8 @@ agentsail init
 This installs:
 
 - `.claude-plugin/` and `.claude/` commands, skills, agents, hooks, rules, settings
-- `.codex/commands/agentsail/` command recipes
-- `.codex/skills/agentsail/SKILL.md`
+- `.codex-plugin/`, `commands/`, and `skills/` for Codex plugin slash commands and skills
+- `.codex/commands/agentsail/` and `.codex/skills/agentsail/SKILL.md` as fallback recipe docs
 - `fixtures/agentsail/` demo customer context
 - `agentsail.loadtest.yaml` and `locust/agentsail/`
 - `.agentsail/{cache,contracts,runs,reports}` evidence directories
@@ -70,11 +70,13 @@ This installs:
 Codex uses project-local skills and recipes:
 
 ```text
-.codex/skills/agentsail/SKILL.md
-.codex/commands/agentsail/*.md
+.codex-plugin/plugin.json
+commands/agentsail.md
+commands/loadtest.md
+skills/agentsail/SKILL.md
 ```
 
-Codex should read those files and execute the terminal CLI directly from the project root.
+Those plugin files expose `/agentsail`, `/agentsail:init`, `/agentsail:ci`, and `/agentsail:loadtest` in Codex. The command docs instruct Codex to execute the terminal CLI directly from the project root.
 
 ## Demo Commands
 

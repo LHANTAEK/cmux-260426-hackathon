@@ -1,0 +1,20 @@
+{
+  "name": "agentsail-marketplace",
+  "interface": {
+    "displayName": "Agent Sail"
+  },
+  "plugins": [
+    {
+      "name": "agentsail",
+      "source": {
+        "source": "local",
+        "path": "./plugins/agentsail"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_USE"
+      },
+      "category": "Coding"
+    }
+  ]
+}

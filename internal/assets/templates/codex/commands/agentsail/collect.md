@@ -1,4 +1,4 @@
-# agentsail:collect
+# /agentsail:collect
 
 Collect customer fixture context into `.agentsail/cache/<customer>`.
 

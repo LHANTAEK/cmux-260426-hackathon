@@ -1,4 +1,4 @@
-# agentsail:doctor
+# /agentsail:doctor
 
 Check Agent Sail CLI and project runtime wiring.
 

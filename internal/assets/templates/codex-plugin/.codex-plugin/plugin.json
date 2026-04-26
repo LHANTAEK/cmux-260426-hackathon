@@ -1,0 +1,38 @@
+{
+  "name": "agentsail",
+  "version": "0.1.1",
+  "description": "Customer-aware release gate commands and skills for Agent Sail.",
+  "author": {
+    "name": "Agent Sail",
+    "url": "https://github.com/LHANTAEK/cmux-260426-hackathon"
+  },
+  "homepage": "https://github.com/LHANTAEK/cmux-260426-hackathon",
+  "repository": "https://github.com/LHANTAEK/cmux-260426-hackathon",
+  "license": "MIT",
+  "keywords": [
+    "agentsail",
+    "release-gate",
+    "llm",
+    "loadtest",
+    "locust"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Sail",
+    "shortDescription": "Run customer-aware AI agent release gates and load tests",
+    "longDescription": "Agent Sail adds Codex slash commands and skills for project init, customer release gates, HTML evidence reports, and YAML-driven Locust load tests.",
+    "developerName": "Agent Sail",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/LHANTAEK/cmux-260426-hackathon",
+    "defaultPrompt": [
+      "Run Agent Sail release gates or load tests for this project"
+    ],
+    "screenshots": [],
+    "brandColor": "#0F766E"
+  }
+}

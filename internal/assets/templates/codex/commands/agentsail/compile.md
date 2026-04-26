@@ -1,4 +1,4 @@
-# agentsail:compile
+# /agentsail:compile
 
 Compile cached customer context into a release contract.
 

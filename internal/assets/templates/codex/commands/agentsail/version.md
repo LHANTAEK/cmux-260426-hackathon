@@ -1,4 +1,4 @@
-# agentsail:version
+# /agentsail:version
 
 Print Agent Sail version.
 

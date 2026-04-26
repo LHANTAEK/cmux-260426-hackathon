@@ -1,4 +1,4 @@
-# agentsail:init
+# /agentsail:init
 
 Install Agent Sail into the current project:
 

@@ -101,6 +101,20 @@ verify_checksum() {
   info "Checksum verified"
 }
 
+install_codex_plugin() {
+  if [[ "${AGENTSAIL_INSTALL_CODEX_PLUGIN:-1}" == "0" ]]; then
+    return
+  fi
+  if ! command -v codex >/dev/null 2>&1; then
+    return
+  fi
+  info "Registering Agent Sail Codex plugin marketplace"
+  if ! codex plugin marketplace add --ref "${tag}" "${REPO}" >/dev/null 2>&1; then
+    echo "WARNING: Codex plugin marketplace registration failed. Run manually:" >&2
+    echo "  codex plugin marketplace add --ref ${tag} ${REPO}" >&2
+  fi
+}
+
 main() {
   need curl
   local platform tag asset_name base_url binary_path checksum_path
@@ -124,6 +138,7 @@ main() {
 
   info "Installed ${INSTALL_DIR}/${BINARY_NAME}"
   "${INSTALL_DIR}/${BINARY_NAME}" --version
+  install_codex_plugin
 
   if [[ ":${PATH}:" != *":${INSTALL_DIR}:"* ]]; then
     echo ""

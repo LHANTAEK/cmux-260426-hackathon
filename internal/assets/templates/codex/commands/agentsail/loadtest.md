@@ -1,4 +1,4 @@
-# agentsail:loadtest
+# /agentsail:loadtest
 
 YAML-driven Locust load test workflow:
 

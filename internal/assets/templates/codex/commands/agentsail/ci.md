@@ -1,4 +1,4 @@
-# agentsail:ci
+# /agentsail:ci
 
 Run collect, compile, checks, verdict, and optional report generation.
 

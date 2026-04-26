@@ -39,6 +39,9 @@ func Init(projectRoot string) (Summary, error) {
 	if err := copyEmbeddedDir("templates/codex", filepath.Join(abs, ".codex"), &summary); err != nil {
 		return Summary{}, err
 	}
+	if err := copyEmbeddedDir("templates/codex-plugin", abs, &summary); err != nil {
+		return Summary{}, err
+	}
 	if err := copyEmbeddedDir("templates/fixtures", filepath.Join(abs, "fixtures"), &summary); err != nil {
 		return Summary{}, err
 	}
@@ -110,6 +113,9 @@ func ensureGitignore(projectRoot string) error {
 		"bin/agentsail",
 		"fixtures/agentsail/",
 		".codex/commands/agentsail/",
+		".codex-plugin/",
+		"commands/agentsail*.md",
+		"skills/agentsail/",
 		"locust/agentsail/",
 		"agentsail.loadtest.yaml",
 		".gocache/",
@@ -152,7 +158,8 @@ Agent Sail is installed for this project.
 
 - Terminal CLI: ` + "`agentsail`" + `
 - Claude Code commands: ` + "`/agentsail:init`, `/agentsail:collect`, `/agentsail:compile`, `/agentsail:check`, `/agentsail:verdict`, `/agentsail:ci`, `/agentsail:report`, `/agentsail:loadtest`, `/agentsail:doctor`, `/agentsail:version`" + `
-- Codex command docs: ` + "`.codex/commands/agentsail/init.md`, `.codex/commands/agentsail/loadtest.md`" + `
+- Codex plugin commands: ` + "`/agentsail`, `/agentsail:init`, `/agentsail:ci`, `/agentsail:loadtest`" + `
+- Codex skill: ` + "`skills/agentsail/SKILL.md`" + `
 - State/evidence directory: ` + "`.agentsail/`" + `
 - Load test config: ` + "`agentsail.loadtest.yaml`" + `
 - Primary demo:
@@ -160,7 +167,7 @@ Agent Sail is installed for this project.
 - Load test dry run:
   ` + "`agentsail loadtest run --config agentsail.loadtest.yaml --dry-run`" + `
 
-Codex should use the ` + "`agentsail:*`" + ` command docs as task recipes and execute the terminal CLI directly.
+Codex should use the Agent Sail plugin command docs and skill, then execute the terminal CLI directly.
 `
 	data, err := os.ReadFile(path)
 	if err == nil && strings.Contains(string(data), marker) {
@@ -194,7 +201,7 @@ func PrintSummary(summary Summary) {
 	fmt.Println("  agentsail ci --customer acme-bank --target mock:support_agent_v12 --report --cmux-alert")
 	fmt.Println("  agentsail loadtest run --config agentsail.loadtest.yaml --dry-run")
 	fmt.Println("  Claude Code: /agentsail:init, /agentsail:ci, /agentsail:loadtest")
-	fmt.Println("  Codex: read .codex/commands/agentsail/*.md and run the same agentsail CLI")
+	fmt.Println("  Codex: /agentsail, /agentsail:init, /agentsail:ci, /agentsail:loadtest")
 }
 
 func copyEmbeddedFile(src string, dst string, mode fs.FileMode, summary *Summary) error {

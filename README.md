@@ -15,8 +15,8 @@ That URL requires the GitHub repository to be public. For a private repository, 
 Release binaries are published automatically when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Local development install:
@@ -42,7 +42,8 @@ agentsail init
 This installs:
 
 - `.claude-plugin/` and `.claude/` for Claude Code commands, skills, agents, hooks, and rules
-- `.codex/commands/agentsail/` command recipes for Codex
+- `.codex-plugin/`, `commands/`, and `skills/` for Codex plugin slash commands and skills
+- `.codex/commands/agentsail/` legacy command recipes for Codex-readable fallback docs
 - `fixtures/agentsail/` demo context for deterministic local runs
 - `agentsail.loadtest.yaml` and `locust/agentsail/` for YAML-driven Locust load tests
 - `.agentsail/` evidence directories
@@ -77,7 +78,7 @@ Claude Code commands:
 - `/agentsail:doctor`
 - `/agentsail:version`
 
-Codex command recipes are installed under `.codex/commands/agentsail/`. Codex should read those recipes and execute the `agentsail` terminal CLI directly.
+Codex plugin commands are installed under `commands/` with `.codex-plugin/plugin.json`, so Codex can expose `/agentsail`, `/agentsail:init`, `/agentsail:ci`, and `/agentsail:loadtest`. The plugin skill lives at `skills/agentsail/SKILL.md`.
 
 ## Load Test
 
