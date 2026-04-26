@@ -1,3 +1,8 @@
+---
+description: Run Agent Sail dispatcher for project init, release gates, reports, and load tests.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail
 
 Dispatcher recipe. Use the terminal CLI directly:

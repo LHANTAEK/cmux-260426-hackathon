@@ -1,3 +1,8 @@
+---
+description: Generate, install, run, or watch Agent Sail Locust load tests.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:loadtest
 
 YAML-driven Locust load test workflow:

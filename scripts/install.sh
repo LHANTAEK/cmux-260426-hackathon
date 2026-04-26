@@ -9,6 +9,7 @@ INSTALL_DIR="${AGENTSAIL_INSTALL_DIR:-${HOME}/.local/bin}"
 BINARY_NAME="agentsail"
 TAG="${AGENTSAIL_VERSION:-latest}"
 GITHUB_API="https://api.github.com/repos/${REPO}"
+CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CURL_ARGS=()
 
 TMP_DIR=""
@@ -26,6 +27,10 @@ error() {
 
 info() {
   echo "==> $*"
+}
+
+warn() {
+  echo "WARNING: $*" >&2
 }
 
 need() {
@@ -78,6 +83,13 @@ download() {
     || error "Download failed: ${url}"
 }
 
+try_download() {
+  local url="$1"
+  local dest="$2"
+  append_curl_args
+  curl "${CURL_ARGS[@]}" --progress-bar -o "${dest}" "${url}" >/dev/null 2>&1
+}
+
 verify_checksum() {
   local binary_file="$1"
   local checksum_file="$2"
@@ -108,11 +120,42 @@ install_codex_plugin() {
   if ! command -v codex >/dev/null 2>&1; then
     return
   fi
+  local tag="$1"
   info "Registering Agent Sail Codex plugin marketplace"
-  if ! codex plugin marketplace add --ref "${tag}" "${REPO}" >/dev/null 2>&1; then
-    echo "WARNING: Codex plugin marketplace registration failed. Run manually:" >&2
-    echo "  codex plugin marketplace add --ref ${tag} ${REPO}" >&2
+  if codex plugin marketplace add --ref "${tag}" "${REPO}" >/dev/null 2>&1; then
+    return
   fi
+
+  info "Refreshing existing Agent Sail Codex plugin marketplace"
+  if codex plugin marketplace remove agentsail-marketplace >/dev/null 2>&1 \
+    && codex plugin marketplace add --ref "${tag}" "${REPO}" >/dev/null 2>&1; then
+    return
+  fi
+
+  warn "Codex plugin marketplace registration failed. Run manually:"
+  warn "  codex plugin marketplace remove agentsail-marketplace"
+  warn "  codex plugin marketplace add --ref ${tag} ${REPO}"
+}
+
+install_codex_skill() {
+  if [[ "${AGENTSAIL_INSTALL_CODEX_SKILL:-1}" == "0" ]]; then
+    return
+  fi
+
+  local tag="$1"
+  local skill_dir="${CODEX_HOME}/skills/agentsail"
+  local skill_file="${TMP_DIR}/agentsail-SKILL.md"
+  local primary_url="https://raw.githubusercontent.com/${REPO}/${tag}/skills/agentsail/SKILL.md"
+  local template_url="https://raw.githubusercontent.com/${REPO}/${tag}/internal/assets/templates/codex-plugin/skills/agentsail/SKILL.md"
+
+  info "Installing Agent Sail Codex skill to ${skill_dir}"
+  if ! try_download "${primary_url}" "${skill_file}"; then
+    info "Repo skill not found; trying Codex plugin template"
+    download "${template_url}" "${skill_file}"
+  fi
+
+  mkdir -p "${skill_dir}"
+  cp "${skill_file}" "${skill_dir}/SKILL.md"
 }
 
 main() {
@@ -138,7 +181,8 @@ main() {
 
   info "Installed ${INSTALL_DIR}/${BINARY_NAME}"
   "${INSTALL_DIR}/${BINARY_NAME}" --version
-  install_codex_plugin
+  install_codex_skill "${tag}"
+  install_codex_plugin "${tag}"
 
   if [[ ":${PATH}:" != *":${INSTALL_DIR}:"* ]]; then
     echo ""

@@ -1,3 +1,8 @@
+---
+description: Check Agent Sail CLI and project runtime wiring.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:doctor
 
 Check Agent Sail CLI and project runtime wiring.

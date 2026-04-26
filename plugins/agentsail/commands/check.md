@@ -1,3 +1,8 @@
+---
+description: Run Agent Sail release checks against a target.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:check
 
 Run Agent Sail checks against a target.

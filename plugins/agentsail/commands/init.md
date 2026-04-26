@@ -1,3 +1,8 @@
+---
+description: Initialize Agent Sail harness files in the current project.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:init
 
 Install Agent Sail into the current project:

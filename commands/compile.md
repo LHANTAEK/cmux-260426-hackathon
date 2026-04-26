@@ -1,3 +1,8 @@
+---
+description: Compile Agent Sail customer context into a release contract.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:compile
 
 Compile cached customer context into a release contract.

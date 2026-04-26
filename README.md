@@ -15,8 +15,8 @@ That URL requires the GitHub repository to be public. For a private repository, 
 Release binaries are published automatically when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 Local development install:
@@ -31,6 +31,12 @@ This installs `agentsail` to `~/.local/bin` by default. Override with:
 AGENTSAIL_INSTALL_DIR=/tmp/bin ./scripts/install-local.sh
 ```
 
+The web and local installers also install or update the Agent Sail Codex skill at `${CODEX_HOME:-$HOME/.codex}/skills/agentsail/SKILL.md` and refresh the `agentsail-marketplace` Codex plugin registration. Restart Codex after installing so `/agentsail` and `$agentsail` are re-indexed. Disable the standalone skill install with:
+
+```bash
+AGENTSAIL_INSTALL_CODEX_SKILL=0 ./scripts/install-local.sh
+```
+
 ## Project Init
 
 Run once per project:
@@ -43,6 +49,7 @@ This installs:
 
 - `.claude-plugin/` and `.claude/` for Claude Code commands, skills, agents, hooks, and rules
 - `.codex-plugin/`, `commands/`, and `skills/` for Codex plugin slash commands and skills
+- `.agents/skills/agentsail/` for Codex repo-scope skill discovery
 - `.codex/commands/agentsail/` legacy command recipes for Codex-readable fallback docs
 - `fixtures/agentsail/` demo context for deterministic local runs
 - `agentsail.loadtest.yaml` and `locust/agentsail/` for YAML-driven Locust load tests
@@ -78,7 +85,9 @@ Claude Code commands:
 - `/agentsail:doctor`
 - `/agentsail:version`
 
-Codex plugin commands are installed under `commands/` with `.codex-plugin/plugin.json`, so Codex can expose `/agentsail`, `/agentsail:init`, `/agentsail:ci`, and `/agentsail:loadtest`. The plugin skill lives at `skills/agentsail/SKILL.md`.
+Codex plugin commands are packaged under `plugins/agentsail/commands/` for marketplace installs, and `agentsail init` also writes project-local `commands/` with `.codex-plugin/plugin.json`. These expose `/agentsail`, `/agentsail:init`, `/agentsail:ci`, and `/agentsail:loadtest`. The plugin skill lives at `skills/agentsail/SKILL.md`.
+
+The installer-level Codex skill is copied to `$CODEX_HOME/skills/agentsail`, and project init writes `.agents/skills/agentsail`, so Codex can also use `$agentsail` before or inside an initialized project.
 
 ## Load Test
 

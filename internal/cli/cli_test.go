@@ -53,9 +53,10 @@ func TestInitInstallsHarnessIntoEmptyProject(t *testing.T) {
 		".claude/commands/agentsail/ci.md",
 		".claude/commands/agentsail/init.md",
 		".claude/commands/agentsail/loadtest.md",
-		".claude/skills/agentsail-ci/SKILL.md",
+		".claude/skills/agentsail/SKILL.md",
 		".claude/agents/agentsail/verdict-engine.md",
 		".codex-plugin/plugin.json",
+		".agents/skills/agentsail/SKILL.md",
 		"commands/agentsail.md",
 		"commands/loadtest.md",
 		"skills/agentsail/SKILL.md",
@@ -72,6 +73,7 @@ func TestInitInstallsHarnessIntoEmptyProject(t *testing.T) {
 		}
 	}
 	assertContains(t, filepath.Join(tmp, "AGENTS.md"), "execute the terminal CLI directly")
+	assertContains(t, filepath.Join(tmp, ".agents", "skills", "agentsail", "SKILL.md"), "name: agentsail")
 	assertContains(t, filepath.Join(tmp, "commands", "agentsail.md"), "# /agentsail")
 	assertContains(t, filepath.Join(tmp, "commands", "loadtest.md"), "# /agentsail:loadtest")
 	assertContains(t, filepath.Join(tmp, "agentsail.loadtest.yaml"), "ttft_seconds")

@@ -15,8 +15,8 @@ The raw GitHub URL requires a public repository. Private repos return `404` for 
 Release binaries are published automatically by `.github/workflows/release.yml` when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 Development install from this repo:
@@ -31,6 +31,8 @@ This installs `agentsail` into `~/.local/bin` by default. Override with:
 AGENTSAIL_INSTALL_DIR=/tmp/bin ./scripts/install-local.sh
 ```
 
+The installers also install or update the Agent Sail Codex skill at `${CODEX_HOME:-$HOME/.codex}/skills/agentsail/SKILL.md` and refresh the `agentsail-marketplace` Codex plugin registration. Restart Codex after installing so `/agentsail` and `$agentsail` are re-indexed. Set `AGENTSAIL_INSTALL_CODEX_SKILL=0` to skip the standalone skill install.
+
 ## Initialize A Project
 
 Run once per project:
@@ -43,6 +45,7 @@ This installs:
 
 - `.claude-plugin/` and `.claude/` commands, skills, agents, hooks, rules, settings
 - `.codex-plugin/`, `commands/`, and `skills/` for Codex plugin slash commands and skills
+- `.agents/skills/agentsail/` for Codex repo-scope skill discovery
 - `.codex/commands/agentsail/` and `.codex/skills/agentsail/SKILL.md` as fallback recipe docs
 - `fixtures/agentsail/` demo customer context
 - `agentsail.loadtest.yaml` and `locust/agentsail/`
@@ -71,12 +74,15 @@ Codex uses project-local skills and recipes:
 
 ```text
 .codex-plugin/plugin.json
+.agents/skills/agentsail/SKILL.md
 commands/agentsail.md
 commands/loadtest.md
 skills/agentsail/SKILL.md
 ```
 
 Those plugin files expose `/agentsail`, `/agentsail:init`, `/agentsail:ci`, and `/agentsail:loadtest` in Codex. The command docs instruct Codex to execute the terminal CLI directly from the project root.
+
+The installer-level Codex skill is copied into `$CODEX_HOME/skills/agentsail` from `skills/agentsail` or the bundled Codex plugin template, so Codex can use the same Agent Sail guidance even before a project is initialized. Project init also writes `.agents/skills/agentsail/SKILL.md`.
 
 ## Demo Commands
 

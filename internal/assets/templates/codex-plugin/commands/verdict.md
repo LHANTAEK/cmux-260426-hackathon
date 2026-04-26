@@ -1,3 +1,8 @@
+---
+description: Print the latest Agent Sail SHIP, HOLD, or BLOCK verdict.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:verdict
 
 Print the latest SHIP/HOLD/BLOCK verdict for a customer.

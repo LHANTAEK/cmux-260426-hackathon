@@ -1,3 +1,8 @@
+---
+description: Print the Agent Sail CLI version.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:version
 
 Print Agent Sail version.

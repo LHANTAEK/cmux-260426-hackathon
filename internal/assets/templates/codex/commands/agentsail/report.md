@@ -1,3 +1,8 @@
+---
+description: Render or open an Agent Sail HTML evidence report.
+allowed-tools: [Read, Glob, Grep, Bash]
+---
+
 # /agentsail:report
 
 Render or open a standalone HTML evidence report from a run JSON.
