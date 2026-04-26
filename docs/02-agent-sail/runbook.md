@@ -7,7 +7,7 @@ Agent Sail is a Go CLI-first release gate with project-local Claude Code and Cod
 Web install from GitHub:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/main/scripts/install.sh | bash
 ```
 
 The raw GitHub URL requires a public repository. Private repos return `404` for unauthenticated raw downloads.
@@ -15,8 +15,8 @@ The raw GitHub URL requires a public repository. Private repos return `404` for 
 Release binaries are published automatically by `.github/workflows/release.yml` when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.3
-git push origin v0.1.3
+git tag v0.1.4
+git push origin v0.1.4
 ```
 
 Development install from this repo:

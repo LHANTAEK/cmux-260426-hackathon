@@ -68,7 +68,7 @@ cmux alert는 발표 증폭 장치이지 제품 본체가 아니다.
 웹에서 한 줄 설치 (퍼블릭 repo일 때):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/main/scripts/install.sh | bash
 ```
 
 릴리스 바이너리는 `v*` 태그 push 시 자동 발행:

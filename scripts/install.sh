@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh — Download and install the latest Agent Sail binary from GitHub Releases.
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/main/scripts/install.sh | bash
 set -euo pipefail
 
 REPO="${AGENTSAIL_REPO:-LHANTAEK/cmux-260426-hackathon}"
