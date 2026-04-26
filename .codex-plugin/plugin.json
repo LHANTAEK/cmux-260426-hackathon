@@ -1,6 +1,6 @@
 {
   "name": "agentsail",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Customer-aware release gate commands and skills for Agent Sail.",
   "author": {
     "name": "Agent Sail",
