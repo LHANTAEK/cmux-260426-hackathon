@@ -1,6 +1,6 @@
 ---
 name: agentsail
-description: Use when running Agent Sail in Codex: project init, customer release gates, evidence reports, and YAML-driven Locust load tests.
+description: "Use when running Agent Sail in Codex: project init, customer release gates, evidence reports, and YAML-driven Locust load tests."
 ---
 
 # Agent Sail
