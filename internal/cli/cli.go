@@ -23,8 +23,11 @@ func Run(args []string) int {
 		return 2
 	}
 	switch args[0] {
-	case "version":
+	case "version", "--version", "-v":
 		fmt.Println("agentsail", version.Version)
+		return 0
+	case "help", "--help", "-h":
+		usage()
 		return 0
 	case "doctor":
 		fmt.Println("agentsail doctor: ok")

@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# install.sh — Download Agent Sail from GitHub and install the agentsail CLI.
+# install.sh — Download and install the latest Agent Sail binary from GitHub Releases.
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
 set -euo pipefail
 
 REPO="${AGENTSAIL_REPO:-LHANTAEK/cmux-260426-hackathon}"
-REF="${AGENTSAIL_REF:-mvp}"
 INSTALL_DIR="${AGENTSAIL_INSTALL_DIR:-${HOME}/.local/bin}"
 BINARY_NAME="agentsail"
+TAG="${AGENTSAIL_VERSION:-latest}"
+GITHUB_API="https://api.github.com/repos/${REPO}"
+CURL_ARGS=()
 
 TMP_DIR=""
 cleanup() {
@@ -30,48 +32,98 @@ need() {
   command -v "$1" >/dev/null 2>&1 || error "'$1' is required but was not found"
 }
 
+append_curl_args() {
+  CURL_ARGS=(-fsSL)
+  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    CURL_ARGS+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+  fi
+  CURL_ARGS+=(-H "Accept: application/vnd.github+json")
+}
+
 detect_platform() {
+  local os arch
   case "$(uname -s)" in
-    Darwin|Linux) ;;
+    Linux) os="linux" ;;
+    Darwin) os="darwin" ;;
     *) error "Unsupported OS: $(uname -s). Only macOS and Linux are supported." ;;
   esac
   case "$(uname -m)" in
-    x86_64|amd64|arm64|aarch64) ;;
+    x86_64|amd64) arch="amd64" ;;
+    arm64|aarch64) arch="arm64" ;;
     *) error "Unsupported architecture: $(uname -m). Only amd64 and arm64 are supported." ;;
   esac
+  echo "${os}-${arch}"
+}
+
+fetch_latest_tag() {
+  if [[ "${TAG}" != "latest" ]]; then
+    echo "${TAG}"
+    return
+  fi
+  local tag
+  append_curl_args
+  tag=$(curl "${CURL_ARGS[@]}" "${GITHUB_API}/releases/latest" \
+    | grep '"tag_name"' \
+    | head -1 \
+    | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+  [[ -n "${tag}" ]] || error "Could not fetch latest release tag for ${REPO}"
+  echo "${tag}"
+}
+
+download() {
+  local url="$1"
+  local dest="$2"
+  append_curl_args
+  curl "${CURL_ARGS[@]}" --progress-bar -o "${dest}" "${url}" \
+    || error "Download failed: ${url}"
+}
+
+verify_checksum() {
+  local binary_file="$1"
+  local checksum_file="$2"
+  local binary_basename expected_line old_dir
+  binary_basename="$(basename "${binary_file}")"
+  expected_line="$(grep " ${binary_basename}$" "${checksum_file}" 2>/dev/null || true)"
+  [[ -n "${expected_line}" ]] || error "No checksum entry found for ${binary_basename}"
+  echo "${expected_line}" > "${TMP_DIR}/single.sha256"
+  old_dir="$(pwd)"
+  cd "${TMP_DIR}"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum -c single.sha256 --status \
+      || error "SHA-256 checksum mismatch for ${binary_basename}"
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 -c single.sha256 --status \
+      || error "SHA-256 checksum mismatch for ${binary_basename}"
+  else
+    error "sha256sum or shasum is required for checksum verification"
+  fi
+  cd "${old_dir}"
+  info "Checksum verified"
 }
 
 main() {
-  detect_platform
   need curl
-  need tar
-  need go
+  local platform tag asset_name base_url binary_path checksum_path
+  platform="$(detect_platform)"
+  tag="$(fetch_latest_tag)"
+  asset_name="${BINARY_NAME}-${tag}-${platform}"
+  base_url="https://github.com/${REPO}/releases/download/${tag}"
 
   TMP_DIR="$(mktemp -d)"
-  local archive="${TMP_DIR}/agentsail.tar.gz"
-  local url="https://github.com/${REPO}/archive/${REF}.tar.gz"
+  binary_path="${TMP_DIR}/${asset_name}"
+  checksum_path="${TMP_DIR}/checksums-sha256.txt"
 
-  info "Downloading Agent Sail from ${REPO}@${REF}"
-  curl -fsSL --progress-bar -o "${archive}" "${url}" \
-    || error "Download failed: ${url}"
+  info "Installing Agent Sail ${tag} for ${platform}"
+  download "${base_url}/${asset_name}" "${binary_path}"
+  download "${base_url}/checksums-sha256.txt" "${checksum_path}"
+  verify_checksum "${binary_path}" "${checksum_path}"
 
-  info "Extracting source"
-  tar -xzf "${archive}" -C "${TMP_DIR}"
-  local src_dir
-  src_dir="$(find "${TMP_DIR}" -mindepth 1 -maxdepth 1 -type d | head -1)"
-  [[ -n "${src_dir}" ]] || error "Could not find extracted source directory"
-
-  info "Building ${BINARY_NAME}"
   mkdir -p "${INSTALL_DIR}"
-  (
-    cd "${src_dir}"
-    GOCACHE="${TMP_DIR}/gocache" GOMODCACHE="${TMP_DIR}/gomodcache" \
-      go build -o "${INSTALL_DIR}/${BINARY_NAME}" ./cmd/agentsail
-  )
+  mv "${binary_path}" "${INSTALL_DIR}/${BINARY_NAME}"
   chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 
   info "Installed ${INSTALL_DIR}/${BINARY_NAME}"
-  "${INSTALL_DIR}/${BINARY_NAME}" version
+  "${INSTALL_DIR}/${BINARY_NAME}" --version
 
   if [[ ":${PATH}:" != *":${INSTALL_DIR}:"* ]]; then
     echo ""
