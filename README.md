@@ -1,6 +1,6 @@
 # Agent Sail
 
-> **Same agent. Different customer. Different launch gate.**
+## Same agent. Different customer. Different launch gate.
 
 Agent Sail은 고객별 성공 기준을 실행 가능한, 증거 기반의 AI 에이전트 출시 게이트로 바꾼다.
 고객에게 에이전트를 보여주기 전에, Agent Sail이 `SHIP`, `HOLD`, `BLOCK`을 evidence와 함께 판정한다.
@@ -15,15 +15,6 @@ Agent Sail은 고객별 성공 기준을 실행 가능한, 증거 기반의 AI �
 고객 미팅 / Slack / 메일 / Notion / PRD / GitHub PR / staging 동작에 흩어져 있다.
 같은 에이전트도 어떤 고객에게는 출시 가능하고, 다른 고객에게는 출시하면 안 된다.
 
-| 고객 | 기준 | 데모 verdict |
-|---|---|---|
-| `finbank` | 모든 답변에 citation, PII 노출 금지, 50명 동시, `429` graceful fallback | **HOLD** |
-| `retailco` | 한국어 환불 정책 답변, 20명 동시, fallback 선택 | **SHIP** |
-| `acme-bank` | enterprise tone, white-label only, CSV export 필수, beta 배지 금지 | **BLOCK** |
-
-`acme-bank`의 BLOCK 사유는 `missing CSV export`, `beta badge exposed`, `tone drift` 세 줄이다.
-이 대비가 제품의 본체다.
-
 ---
 
 ## 핵심 워크플로우
@@ -34,9 +25,7 @@ Messenger / email / Notion / GitHub / PR / staging / tests
   -> customer contract           (.agentsail/contracts/<customer>-contract.json)
   -> target adapter              (langgraph: / http: / mock:)
   -> criteria checks             (citations, PII, language, tone, deliverables)
-  -> Playwright smoke checks     (signup, email, mobile CTA, export)
   -> load/SLO probe              (asyncio + Locust, p50/p95/error)
-  -> chaos-lite probe            (429 / timeout / empty retrieval)
   -> verdict engine              (rule-based, not LLM-judged)
   -> exit code + rich TUI + cmux alert + report.json + report.html
   -> SHIP / HOLD / BLOCK
@@ -60,6 +49,20 @@ cmux alert는 발표 증폭 장치이지 제품 본체가 아니다.
 
 > Codex는 요청받으면 코드를 고친다. Agent Sail은 출시 기준을 반복 가능하고 측정 가능하고
 > 강제 가능하고 artifact로 남는 게이트로 만든다.
+
+---
+
+## 차별점과 방어 논리
+
+| 질문 | 답변 |
+|---|---|
+| "그냥 QA/CI 아닌가?" | 전통적 CI는 generic code behavior, Agent Sail은 customer-specific launch criteria를 agent output 기준으로 검사. |
+| "Codex가 하면 되는 것 아닌가?" | Codex는 코드를 고치는 도구. Agent Sail은 기준을 반복 가능, 측정 가능, 강제 가능, artifact-backed로 만든다. |
+| "Load 결과가 production-accurate한가?" | capacity certification이 아니라 launch-readiness probe다. 명백한 SLO blocker만 잡는다. |
+| "Verdict가 주관적인가?" | LLM judge가 아니라 customer criteria + measured evidence 기반의 rule-based 판정. |
+| "왜 web dashboard가 아닌가?" | 제품은 release gate. CLI/TUI가 source of truth, HTML은 shareable evidence, cmux는 amplifier. |
+| "범용 agent platform인가?" | 아니다. customer launch readiness 한 점에 집중한 release verification harness. |
+| "Criteria를 손으로 입력하는가?" | 아니다. 메신저 / 메일 / Notion / GitHub / PR / staging / test에서 자동 수집 후 contract로 컴파일. |
 
 ---
 
@@ -123,7 +126,7 @@ agentsail ci --customer acme-bank --target mock:support_agent_v12 --report --cmu
 ```text
 finbank   -> HOLD     (citation 누락 / 50명 ramp 중 31명에서 p95 5s 초과)
 retailco  -> SHIP
-acme-bank -> BLOCK    (missing CSV export, beta badge exposed, tone drift)
+acme-bank -> BLOCK
 ```
 
 가장 강한 시연 장면은 `acme-bank` 실행 → cmux 사이드바 빨간 알림 점멸 →
@@ -133,14 +136,12 @@ acme-bank -> BLOCK    (missing CSV export, beta badge exposed, tone drift)
 
 ## Slash Commands
 
-`/agentsail:*` 네임스페이스 한 군데로 통합되어 있다 (구 `agentsail-ci` 같은 하이픈 형은 제거).
-
 | Command | 역할 |
 |---|---|
 | `/agentsail:init` | 프로젝트에 Agent Sail 설치 |
 | `/agentsail:collect <customer>` | Slack / Gmail / Notion / GitHub MCP에서 고객 맥락 수집 → `.agentsail/cache/<customer>/*.json` |
 | `/agentsail:compile --customer <c>` | 캐시를 `customer_contract.json`으로 컴파일 |
-| `/agentsail:check --customer <c> --target <t>` | 결정론적 기준 검사 + chaos-lite probe |
+| `/agentsail:check --customer <c> --target <t>` | 결정론적 기준 검사 |
 | `/agentsail:verdict --customer <c>` | 최신 run을 `SHIP`/`HOLD`/`BLOCK`으로 판정 |
 | `/agentsail:ci --customer <c> --target <t> [--report] [--open]` | compile → check → verdict → report 일괄 |
 | `/agentsail:report <run-json> [--open]` | run JSON에서 standalone HTML evidence 생성 |
@@ -228,21 +229,10 @@ harness가 structured evidence를 반환하면 verdict engine이 `SHIP`/`HOLD`/`
 - required scenario output 존재
 - 합의 문구 / 출시 제약과의 drift 없음
 
-### Playwright Smoke Check
-- signup / auth path 완료
-- 가입 후 welcome email / notification 발송
-- mobile CTA, 주요 customer-facing 화면
-- required export / customer deliverable 노출
-
 ### Load / SLO Probe (production capacity가 아니라 launch-readiness probe)
 - `asyncio` 또는 Locust 기반 짧은 ramp
 - p50, p95, error rate, 완료 사용자 수
 - 실패 예: `[FAIL] load: reached only 31/50 users before p95 exceeded 5000ms`
-
-### Chaos-lite Probe
-- provider `429`
-- tool timeout
-- empty retrieval result
 
 ### Verdict
 - `SHIP` / `SHIP WITH LIMITS` / `HOLD` / `BLOCK`
@@ -372,8 +362,8 @@ CLI 어휘:
 1. `VERDICT` — `SHIP` / `HOLD` / `BLOCK`
 2. `WHY` — 실패한 고객 기준과 측정 evidence
 3. `FIX NOW` — patch 제안, 실패 scenario, 다음 action
-4. `EVIDENCE` — criteria source, probe output, load metrics, chaos-lite, screenshot/log
-5. `PATCH` — 고칠 수 있을 때 generated patch sketch / failing Playwright test / concrete next command
+4. `EVIDENCE` — criteria source, probe output, load metrics, log
+5. `PATCH` — 고칠 수 있을 때 generated patch sketch / concrete next command
 
 상단 예시:
 
@@ -405,20 +395,6 @@ TUI / cmux alert / HTML은 같은 verdict의 다른 채널이다.
 
 ---
 
-## 리스크와 방어
-
-| Risk | Defense |
-|---|---|
-| "그냥 QA/CI 아닌가?" | 전통적 CI는 generic code behavior, Agent Sail은 customer-specific launch criteria를 agent output 기준으로 검사. |
-| "Codex가 하면 되는 것 아닌가?" | Codex는 코드를 고치는 도구. Agent Sail은 기준을 반복 가능, 측정 가능, 강제 가능, artifact-backed로 만든다. |
-| "Load 결과가 production-accurate한가?" | capacity certification이 아니라 launch-readiness probe다. 명백한 SLO blocker만 잡는다. |
-| "Verdict가 주관적인가?" | LLM judge가 아니라 customer criteria + measured evidence 기반의 rule-based 판정. |
-| "왜 web dashboard가 아닌가?" | 제품은 release gate. CLI/TUI가 source of truth, HTML은 shareable evidence, cmux는 amplifier. |
-| "범용 agent platform인가?" | 아니다. customer launch readiness 한 점에 집중한 release verification harness. |
-| "Criteria를 손으로 입력하는가?" | 아니다. 메신저 / 메일 / Notion / GitHub / PR / staging / test에서 자동 수집 후 contract로 컴파일. |
-
----
-
 ## Roadmap
 
 - 프로덕션 connector: Slack, Teams, Gmail, Notion, Linear, GitHub, PR comment
@@ -442,8 +418,7 @@ TUI / cmux alert / HTML은 같은 verdict의 다른 채널이다.
 - cmux = visual amplifier, 제품 본체 아님.
 - HTML report = shareable evidence package, 가장 강한 데모 artifact.
 - MVP는 manual entry가 아니라 ingest용 local fixture 사용.
-- 핵심 대비: `finbank -> HOLD`, `retailco -> SHIP`, `acme-bank -> BLOCK`.
-- 가장 강한 문장: **Same agent. Different customer. Different launch gate.**
+- 핵심 문장: **Same agent. Different customer. Different launch gate.**
 
 ---
 
