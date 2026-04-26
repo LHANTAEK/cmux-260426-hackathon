@@ -15,8 +15,8 @@ The raw GitHub URL requires a public repository. Private repos return `404` for 
 Release binaries are published automatically by `.github/workflows/release.yml` when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 Development install from this repo:

@@ -15,8 +15,8 @@ That URL requires the GitHub repository to be public. For a private repository, 
 Release binaries are published automatically when a `v*` tag is pushed:
 
 ```bash
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 Local development install:
