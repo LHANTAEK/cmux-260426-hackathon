@@ -25,6 +25,7 @@ locust:
 
 runtime:
   auto_install: true
+  installer: uv
   python: python3
   venv: .agentsail/loadtests/.venv
   packages:

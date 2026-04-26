@@ -8,10 +8,14 @@ agentsail loadtest explain
 agentsail loadtest doctor --config agentsail.loadtest.yaml
 agentsail loadtest install --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml
 ```
 
-`run` auto-installs Locust and httpx into `.agentsail/loadtests/.venv` when missing. Use `--no-install` only when the CI image already owns the runtime.
+Use `tui` when the user wants to see the load test while it runs. It shows the target, user profile, SLOs, memory limit/alert in GB, artifact paths, and recent Locust output in the terminal.
+
+`run` and `tui` auto-installs Locust and httpx with `uv` into `.agentsail/loadtests/.venv` when missing. Use `--no-install` only when the CI image already owns the runtime.
 
 The YAML template documents the LLM app monitoring metrics and SLOs:
 

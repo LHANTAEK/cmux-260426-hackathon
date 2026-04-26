@@ -4,6 +4,12 @@ Agent Sail is a Go CLI-first release gate with project-local Claude Code and Cod
 
 ## Install CLI
 
+Web install from GitHub:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
+```
+
 Development install from this repo:
 
 ```bash
@@ -110,10 +116,14 @@ Run or preview Locust:
 
 ```bash
 agentsail loadtest run --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml
 ```
 
-`run` auto-installs `locust` and `httpx` into `.agentsail/loadtests/.venv` when missing.
+Use `tui` for live load-test usability checks. It runs Locust and renders a terminal board with target, user profile, SLOs, memory limit/alert in GB, artifact paths, and recent Locust output.
+
+`run` and `tui` auto-install `locust` and `httpx` with `uv` into `.agentsail/loadtests/.venv` when missing.
 
 ## Load-Test YAML
 

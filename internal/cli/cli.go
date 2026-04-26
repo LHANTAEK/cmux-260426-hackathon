@@ -62,7 +62,7 @@ func usage() {
   agentsail check --customer <customer> --target mock:support_agent_v12
   agentsail verdict --customer <customer>
   agentsail ci --customer <customer> --target <target> [--report] [--open] [--cmux-alert] [--soft-exit]
-  agentsail loadtest init|install|doctor|explain|run [--config agentsail.loadtest.yaml] [--dry-run] [--no-install]
+  agentsail loadtest init|install|doctor|explain|run|tui [--config agentsail.loadtest.yaml] [--dry-run] [--no-install]
   agentsail report .agentsail/runs/<run>.json [--open]
   agentsail version
   agentsail doctor`)
@@ -213,7 +213,7 @@ func ci(args []string) int {
 
 func loadtestCmd(args []string) int {
 	if len(args) == 0 {
-		fmt.Println("usage: agentsail loadtest init|explain|run [--config agentsail.loadtest.yaml] [--dry-run]")
+		fmt.Println("usage: agentsail loadtest init|install|doctor|explain|run|tui [--config agentsail.loadtest.yaml] [--dry-run] [--no-install]")
 		return 2
 	}
 	switch args[0] {
@@ -280,6 +280,24 @@ func loadtestCmd(args []string) int {
 		}
 		if err := loadtest.Run(cfg, *dryRun, *noInstall); err != nil {
 			fmt.Println("loadtest run failed:", err)
+			return 1
+		}
+		return 0
+	case "tui", "watch":
+		fs := flag.NewFlagSet("loadtest tui", flag.ContinueOnError)
+		configPath := fs.String("config", loadtest.DefaultConfigPath, "load-test YAML path")
+		dryRun := fs.Bool("dry-run", false, "render the load-test board without executing Locust")
+		noInstall := fs.Bool("no-install", false, "fail instead of auto-installing Locust when missing")
+		if fs.Parse(args[1:]) != nil {
+			return 2
+		}
+		cfg, err := loadtest.ReadConfig(*configPath)
+		if err != nil {
+			fmt.Println("loadtest tui failed:", err)
+			return 1
+		}
+		if err := loadtest.RunTUI(cfg, *dryRun, *noInstall); err != nil {
+			fmt.Println("loadtest tui failed:", err)
 			return 1
 		}
 		return 0

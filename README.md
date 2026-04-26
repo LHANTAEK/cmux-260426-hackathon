@@ -4,6 +4,12 @@ Customer-aware release gate for AI agent demos.
 
 ## Install
 
+Web install from GitHub:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/scripts/install.sh | bash
+```
+
 Local development install:
 
 ```bash
@@ -85,12 +91,16 @@ agentsail loadtest doctor --config agentsail.loadtest.yaml
 agentsail loadtest install --config agentsail.loadtest.yaml
 ```
 
-Preview or run Locust. `run` creates `.agentsail/loadtests/.venv` and installs `locust` + `httpx` when missing:
+Preview or run Locust. `run` and `tui` create `.agentsail/loadtests/.venv` with `uv` and install `locust` + `httpx` when missing:
 
 ```bash
 agentsail loadtest run --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml
 ```
+
+Use `agentsail loadtest tui` for live terminal usability tests. It runs Locust and shows the target, load profile, SLOs, memory alert converted to GB, artifact paths, and recent Locust output.
 
 The YAML template documents metrics from `llm-apps-monitoring-0424`:
 

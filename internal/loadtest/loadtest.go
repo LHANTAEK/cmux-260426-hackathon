@@ -39,6 +39,7 @@ type Config struct {
 	} `yaml:"locust"`
 	Runtime struct {
 		AutoInstall bool     `yaml:"auto_install"`
+		Installer   string   `yaml:"installer"`
 		Python      string   `yaml:"python"`
 		Venv        string   `yaml:"venv"`
 		Packages    []string `yaml:"packages"`
@@ -120,6 +121,9 @@ func ReadConfig(path string) (Config, error) {
 	if cfg.Runtime.Python == "" {
 		cfg.Runtime.Python = "python3"
 	}
+	if cfg.Runtime.Installer == "" {
+		cfg.Runtime.Installer = "uv"
+	}
 	if cfg.Runtime.Venv == "" {
 		cfg.Runtime.Venv = ".agentsail/loadtests/.venv"
 	}
@@ -186,6 +190,7 @@ func Doctor(cfg Config) error {
 	fmt.Println("loadtest config: ok")
 	fmt.Println("locust runner:", path)
 	fmt.Println("auto_install:", cfg.Runtime.AutoInstall)
+	fmt.Println("installer:", RuntimeInstaller(cfg))
 	fmt.Println("venv:", cfg.Runtime.Venv)
 	fmt.Println("packages:", strings.Join(cfg.Runtime.Packages, ", "))
 	return nil
@@ -212,7 +217,42 @@ func EnsureLocust(cfg Config, locustPath string) error {
 	if !cfg.Runtime.AutoInstall {
 		return fmt.Errorf("locust not found at %s and runtime.auto_install=false", locustPath)
 	}
-	fmt.Printf("Installing Locust runtime into %s\n", cfg.Runtime.Venv)
+	installer := RuntimeInstaller(cfg)
+	fmt.Printf("Installing Locust runtime into %s with %s\n", cfg.Runtime.Venv, installer)
+	if installer == "uv" {
+		return installWithUV(cfg)
+	}
+	if installer != "pip" {
+		return fmt.Errorf("unsupported runtime.installer %q; use uv, pip, or auto", cfg.Runtime.Installer)
+	}
+	return installWithPip(cfg)
+}
+
+func RuntimeInstaller(cfg Config) string {
+	switch strings.ToLower(strings.TrimSpace(cfg.Runtime.Installer)) {
+	case "", "uv":
+		return "uv"
+	case "auto":
+		if _, err := exec.LookPath("uv"); err == nil {
+			return "uv"
+		}
+		return "pip"
+	case "pip", "python":
+		return "pip"
+	default:
+		return cfg.Runtime.Installer
+	}
+}
+
+func installWithUV(cfg Config) error {
+	if err := runCommand("uv", "venv", "--python", cfg.Runtime.Python, cfg.Runtime.Venv); err != nil {
+		return err
+	}
+	args := append([]string{"pip", "install", "--python", venvPython(cfg)}, cfg.Runtime.Packages...)
+	return runCommand("uv", args...)
+}
+
+func installWithPip(cfg Config) error {
 	if err := runCommand(cfg.Runtime.Python, "-m", "venv", cfg.Runtime.Venv); err != nil {
 		return err
 	}
@@ -241,7 +281,7 @@ func Explain() {
 	fmt.Println("  Agent Sail converts those values internally; users do not write byte values")
 	fmt.Println()
 	fmt.Println("Runtime:")
-	fmt.Println("  agentsail loadtest run auto-installs Locust/httpx into .agentsail/loadtests/.venv when missing")
+	fmt.Println("  agentsail loadtest run auto-installs Locust/httpx with uv into .agentsail/loadtests/.venv when missing")
 	fmt.Println("  agentsail loadtest install pre-installs that runtime explicitly")
 }
 
@@ -324,6 +364,13 @@ func venvBinary(cfg Config, name string) string {
 		return filepath.Join(cfg.Runtime.Venv, "Scripts", name+".exe")
 	}
 	return filepath.Join(cfg.Runtime.Venv, "bin", name)
+}
+
+func venvPython(cfg Config) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(cfg.Runtime.Venv, "Scripts", "python.exe")
+	}
+	return filepath.Join(cfg.Runtime.Venv, "bin", "python")
 }
 
 func fileExists(path string) bool {

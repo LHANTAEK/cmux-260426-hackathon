@@ -18,8 +18,12 @@ agentsail verdict --customer acme-bank
 agentsail ci --customer acme-bank --target mock:support_agent_v12 --report --cmux-alert
 agentsail report .agentsail/runs/acme-bank-run-001.json --open
 agentsail loadtest init --config agentsail.loadtest.yaml
+agentsail loadtest tui --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml
 ```
+
+Use `agentsail loadtest tui` for live load-test demos and usability testing. It is still a terminal CLI command, but it renders a live board with target, concurrency, SLOs, memory threshold converted to GB, artifact paths, and recent Locust output.
 
 ## Load Test YAML
 

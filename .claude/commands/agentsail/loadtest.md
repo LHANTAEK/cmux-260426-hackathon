@@ -1,6 +1,6 @@
 ---
-description: Generate or run Agent Sail Locust load tests from YAML.
-argument-hint: "<init|run|explain> [--config agentsail.loadtest.yaml]"
+description: Generate, run, or watch Agent Sail Locust load tests from YAML.
+argument-hint: "<init|tui|run|explain> [--config agentsail.loadtest.yaml]"
 allowed-tools: Bash, Read, Write, Edit
 ---
 
@@ -14,10 +14,14 @@ agentsail loadtest explain
 agentsail loadtest doctor --config agentsail.loadtest.yaml
 agentsail loadtest install --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml --dry-run
+agentsail loadtest tui --config agentsail.loadtest.yaml
 agentsail loadtest run --config agentsail.loadtest.yaml
 ```
 
-`run` auto-installs Locust and httpx into `.agentsail/loadtests/.venv` when missing. Use `--no-install` when a CI image must provide Locust itself.
+Use `tui` for live usage testing and demos. It runs Locust and shows the target, user profile, SLOs, memory limit/alert in GB, artifact paths, and recent Locust output in the terminal.
+
+`run` and `tui` auto-install Locust and httpx with `uv` into `.agentsail/loadtests/.venv` when missing. Use `--no-install` when a CI image must provide Locust itself.
 
 Metrics tracked by the template come from `llm-apps-monitoring-0424`: `ttft_seconds`, `inter_token_latency_seconds`, `total_response_seconds`, `llm_requests_total`, `llm_errors_total`, `request_queue_depth`, `concurrent_llm_calls`, `concurrent_sessions`, and `container_memory_working_set_bytes`.
 
