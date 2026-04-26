@@ -13,8 +13,6 @@ Codex와 Claude가 코드를 빠르게 만들수록 마지막 한 사이클이 �
 | **Transform** | 수집한 증거를 `customer_contract.json`으로 컴파일하고, 에이전트 실행 결과와 비교해 누락 기준, tone drift, SLO blocker, 필요한 개선점을 만든다. |
 | **Load** | 개선 후 다시 확인한 evidence, load/SLO 결과, 변경 요약을 `report.json` / `report.html` / cmux alert / exit code로 내보내고 `SHIP`, `HOLD`, `BLOCK`을 판정한다. |
 
-심사위원이 봐야 할 가치는 단순 QA가 아니다. Agent Sail은 **증거 없는 AI 출고를 막고, 개선 근거까지 남기는 release harness**다.
-
 설계 원본은 [`docs/02-agent-sail/proposal.ko.md`](docs/02-agent-sail/proposal.ko.md).
 
 ---
