@@ -120,3 +120,51 @@ shiplock-harness 는 그 **출고 감독 하네스** 다. 여러 공장에서 �
 - "모델이 똑똑하다"를 팔지 않는다. **모델이 만든 결과물을 누가 출고 판정하느냐** 를 판다.
 - "에이전트가 많다"를 팔지 않는다. **증거 없이 출고되지 못하게 막는 하네스** 를 판다.
 - 새 세션에서 이 문서를 읽는 모델은 반드시 이 후보를 `범용 플랫폼`이 아니라 **Developer Tooling용 release verification harness** 로 이해해야 한다.
+
+## 부록 A. 새 세션용 핵심 맥락
+
+이 문서의 현재 1순위 해석은 `generic agent platform` 이 아니라 **customer-aware release harness** 다.
+
+한 문장 요약:
+
+> 여러 고객사를 동시에 상대하는 작은 AI 팀이, 흩어진 고객사 맥락을 자동 수집해 통합 deliverable 을 출고 직전에 검사하고, 위험하면 차단하며, 그 이유를 cmux 경고와 HTML 리포트로 남기는 도구.
+
+반드시 유지할 것:
+- 본체는 `판정 엔진` 이다. cmux 는 시각 효과 채널이고, HTML 은 증빙 채널이다.
+- 입력은 `Slack + Notion + GitHub` 3개가 기본이다.
+- 출력은 `exit code + rich TUI + cmux alert + report.json + report.html` 이다.
+- 최종 액션은 `allow` 또는 `block` 이다.
+- CLI 가 source of truth 다. 웹은 대시보드가 아니라 생성물이다.
+
+바꾸지 말아야 할 메시지:
+- "고객이 화내기 전에 잘못된 출고를 막는다"
+- "QA 한 사람을 못 두는 작은 AI 팀의 마지막 출고 게이트"
+- "cmux 는 제품 본체가 아니라 심사장 증폭기"
+
+절대 확장하지 말 것:
+- 범용 에이전트 오케스트레이션 플랫폼
+- full SaaS dashboard
+- provider lock-in 제품
+- "모든 assistant 지원" 같은 과장
+
+권장 제품 형태:
+- `client-release approve ... --open-report`
+- 실행 후 `report.json` 과 `report.html` 생성
+- macOS 에서는 `open report.html`, Linux 에서는 `xdg-open report.html` 로 분기 가능
+
+하네스 관점에서의 모듈 분해:
+- `collectors/`: Slack, Notion, GitHub 컨텍스트 수집
+- `compiler/`: 수집한 맥락을 `customer_contract.json` 으로 컴파일
+- `checks/`: hard rules, Playwright smoke, LLM omission/tone judge
+- `engine/`: score 산정, block/allow 판정
+- `renderers/`: terminal summary, cmux message, html report
+
+`oh-my-braincrew` 와의 관계:
+- `oh-my-braincrew` 는 에이전트 실행/오케스트레이션 하네스의 레퍼런스다
+- 여기서는 그 철학을 빌리되, 목표를 `release evaluation harness` 로 좁힌다
+- 즉 "무엇이든 orchestrate" 가 아니라 "무엇이든 evaluate before release" 다
+
+데모 고정값:
+- 고객사 이름: `acme-bank`
+- 실패 포인트 3개: `missing CSV export`, `beta badge exposed`, `tone drift`
+- 시연 핵심 장면: cmux 빨강 점멸 직후 `report.html` 자동 오픈
