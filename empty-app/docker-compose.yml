@@ -1,0 +1,14 @@
+services:
+  app:
+    build: ./app
+    container_name: agentsail-langgraph-app
+    env_file: .env
+    environment:
+      MAX_CONCURRENCY: "${MAX_CONCURRENCY:-128}"
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    restart: unless-stopped
