@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Agent Sail local artifacts
+.agentsail/
+bin/
+.gocache/
+.gomodcache/
+dist/

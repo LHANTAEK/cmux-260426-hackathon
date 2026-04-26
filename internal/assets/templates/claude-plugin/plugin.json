@@ -1,0 +1,72 @@
+{
+  "name": "agentsail",
+  "version": "0.1.0",
+  "description": "Customer-aware release gate harness for Agent Sail.",
+  "author": "Agent Sail",
+  "commands": [
+    {
+      "name": "agentsail",
+      "description": "Dispatch Agent Sail collect, compile, check, verdict, report, and ci workflows.",
+      "path": ".claude/commands/agentsail/agentsail.md"
+    },
+    {
+      "name": "agentsail:collect",
+      "description": "Collect customer context into .agentsail/cache.",
+      "path": ".claude/commands/agentsail/collect.md"
+    },
+    {
+      "name": "agentsail:init",
+      "description": "Install Agent Sail project harness files and YAML load-test template.",
+      "path": ".claude/commands/agentsail/init.md"
+    },
+    {
+      "name": "agentsail:ci",
+      "description": "Run Agent Sail compile, check, verdict, and report.",
+      "path": ".claude/commands/agentsail/ci.md"
+    },
+    {
+      "name": "agentsail:compile",
+      "description": "Compile cached context into a customer release contract.",
+      "path": ".claude/commands/agentsail/compile.md"
+    },
+    {
+      "name": "agentsail:check",
+      "description": "Run Agent Sail checks against a target.",
+      "path": ".claude/commands/agentsail/check.md"
+    },
+    {
+      "name": "agentsail:verdict",
+      "description": "Print the latest SHIP/HOLD/BLOCK verdict.",
+      "path": ".claude/commands/agentsail/verdict.md"
+    },
+    {
+      "name": "agentsail:loadtest",
+      "description": "Generate or run YAML-driven Locust load tests.",
+      "path": ".claude/commands/agentsail/loadtest.md"
+    },
+    {
+      "name": "agentsail:report",
+      "description": "Render an Agent Sail HTML evidence report.",
+      "path": ".claude/commands/agentsail/report.md"
+    },
+    {
+      "name": "agentsail:doctor",
+      "description": "Check Agent Sail CLI and project wiring.",
+      "path": ".claude/commands/agentsail/doctor.md"
+    },
+    {
+      "name": "agentsail:version",
+      "description": "Print Agent Sail version.",
+      "path": ".claude/commands/agentsail/version.md"
+    }
+  ],
+  "skills": [
+    ".claude/skills/agentsail/SKILL.md",
+    ".claude/skills/agentsail-collect/SKILL.md",
+    ".claude/skills/agentsail-compile/SKILL.md",
+    ".claude/skills/agentsail-check/SKILL.md",
+    ".claude/skills/agentsail-verdict/SKILL.md",
+    ".claude/skills/agentsail-report/SKILL.md",
+    ".claude/skills/agentsail-ci/SKILL.md"
+  ]
+}

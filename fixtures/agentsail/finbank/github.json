@@ -1,0 +1,8 @@
+{
+  "customer": "finbank",
+  "release_notes": [
+    "citation requirement remains mandatory",
+    "load gate is 50 concurrent users"
+  ]
+}
+

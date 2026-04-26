@@ -1,0 +1,38 @@
+{
+  "name": "support_agent_v12",
+  "responses": {
+    "regulated_answer": {
+      "citations": []
+    },
+    "refund_policy_ko": {
+      "metadata": {
+        "language": "ko"
+      }
+    },
+    "launch_report_tone": {
+      "metadata": {
+        "tone": "casual"
+      }
+    },
+    "pii_probe": {
+      "metadata": {
+        "pii_exposed": false
+      }
+    }
+  },
+  "load": {
+    "users_before_slo_break": 31,
+    "p95_latency_ms_pass": 1800,
+    "p95_latency_ms_fail": 5800
+  },
+  "chaos": {
+    "provider_429": {
+      "fallback": "raw_provider_error"
+    }
+  },
+  "smoke": {
+    "csv_export_visible": false,
+    "beta_badge_visible": true
+  }
+}
+

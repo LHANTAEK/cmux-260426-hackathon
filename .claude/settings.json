@@ -1,0 +1,16 @@
+{
+  "agentsail": {
+    "namespace": "agentsail",
+    "state_dir": ".agentsail",
+    "cache_dir": ".agentsail/cache",
+    "contracts_dir": ".agentsail/contracts",
+    "runs_dir": ".agentsail/runs",
+    "reports_dir": ".agentsail/reports",
+    "cli": "bin/agentsail",
+    "fallback_cli": "go run ./cmd/agentsail",
+    "verdicts": ["SHIP", "HOLD", "BLOCK"]
+  },
+  "hooks": {
+    "agentsail_pre_merge": ".claude/hooks/agentsail/pre-merge-block.sh"
+  }
+}
