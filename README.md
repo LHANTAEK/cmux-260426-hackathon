@@ -74,7 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/LHANTAEK/cmux-260426-hackathon/mvp/
 릴리스 바이너리는 `v*` 태그 push 시 자동 발행:
 
 ```bash
-git tag v0.1.3 && git push origin v0.1.3
+git tag v0.1.4 && git push origin v0.1.4
 ```
 
 로컬 개발 빌드:
